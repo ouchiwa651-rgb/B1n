@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+import requests
+import time
+import random
+import sys
+
+BANNER = """
+╔══════════════════════════════════╗
+║   WhatsApp Ban Test Tool        ║
+║   Usage: python3 waban.py       ║
+╚══════════════════════════════════╝
+"""
+
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15",
+]
+
+def send_report(target_number, reason):
+    """
+    Envoie un signalement via l'API WhatsApp.
+    Note: Les endpoints exacts changent régulièrement.
+    Cette méthode utilise le formulaire de signalement public.
+    """
+    headers = {
+        "User-Agent": random.choice(USER_AGENTS),
+        "Accept": "application/json, text/plain, */*",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+
+    # Formulaire de signalement WhatsApp (endpoint public)
+    data = {
+        "phone": target_number,
+        "reason": reason,
+        "source": "web",
+    }
+
+    try:
+        # Note: L'URL ci-dessous est illustrative - les vrais endpoints sont dynamiques
+        r = requests.post(
+            "https://www.whatsapp.com/contact/report/",
+            headers=headers,
+            data=data,
+            timeout=10,
+        )
+        return r.status_code == 200
+    except:
+        return False
+
+def mass_report(target, count=50, delay=2):
+    """Envoie 'count' signalements avec un délai entre chaque."""
+    reasons = [
+        "spam", "harassment", "fake_account",
+        "scam", "impersonation", "illegal_content"
+    ]
+
+    print(f"[+] Cible: {target}")
+    print(f"[+] Nombre de signalements: {count}")
+    print(f"[+] Délai: {delay}s\n")
+
+    success = 0
+    for i in range(count):
+        reason = random.choice(reasons)
+        if send_report(target, reason):
+            success += 1
+            print(f"[✓] Signalement {i+1}/{count} envoyé (raison: {reason})")
+        else:
+            print(f"[✗] Signalement {i+1}/{count} échoué")
+
+        time.sleep(delay + random.uniform(0.5, 1.5))
+
+    print(f"\n[+] Terminé: {success}/{count} signalements envoyés avec succès")
+
+if __name__ == "__main__":
+    print(BANNER)
+    if len(sys.argv) < 2:
+        print("Usage: python3 waban.py <numero> [count] [delay]")
+        print("Exemple: python3 waban.py 33612345678 30 3")
+        sys.exit(1)
+
+    target = sys.argv[1]
+    count = int(sys.argv[2]) if len(sys.argv) > 2 else 50
+    delay = int(sys.argv[3]) if len(sys.argv) > 3 else 2
+
+    mass_report(target, count, delay)
